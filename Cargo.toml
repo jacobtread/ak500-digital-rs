@@ -1,0 +1,9 @@
+[package]
+name = "ak500-digital-rs"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+anyhow = "1.0.86"
+hidapi = "2.6.1"
+systemstat = "0.2.3"
