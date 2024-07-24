@@ -1,3 +1,6 @@
+
+<img src="./assets/cooler.jpg" width="240px"/>
+
 # AK500 DIGITAL RS
 
 WIP Open Source system monitor for the DEEPCOOL AK500 DIGITAL CPU display with the main purpose to 
