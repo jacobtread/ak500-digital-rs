@@ -33,10 +33,11 @@ struct Configuration {
     display_mode: DisplayMode,
 }
 
-// By default warn when temperature reaches 90deg celsius
+// By default warn when temperature reaches 90° celsius
 fn default_warning_temperature() -> f32 {
     90.
 }
+
 // By default should show warnings
 fn default_show_warning() -> bool {
     true
