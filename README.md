@@ -5,6 +5,39 @@ be driving the display under linux (But also boasts not having to run electron a
 
 Only supports linux at the moment, library for CPU temps doesn't support windows yet.
 
+## Installation
+
+Below are the instructions for installing:
+
+```sh
+# Build release binary
+cargo build --release
+
+# Copy release binary to /usr/local/bin
+sudo cp ./target/release/ak500-digital-rs /usr/local/bin/ak500-digital
+
+# Create the config directory
+sudo mkdir /etc/ak500-digital
+
+# Copy the example config
+sudo cp ./example-config.toml /etc/ak500-digital/config.toml
+
+# Copy service to systemd
+sudo cp ./ak500-digital.service /etc/systemd/system/ak500-digital.service
+
+# Reload systemctl 
+sudo systemctl daemon-reload
+
+# Start the service
+sudo systemctl start ak500-digital
+
+# Enable automatic start on boot
+sudo systemctl enable ak500-digital
+
+# Verify the service has started
+sudo systemctl status ak500-digital
+```
+
 ## Configuration
 
 

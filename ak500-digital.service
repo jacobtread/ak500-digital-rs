@@ -1,0 +1,11 @@
+[Unit]
+Description=AK500 Digitial service
+After=udev.service
+
+[Service]
+Type=simple
+ExecStart=/usr/local/bin/ak500-digital
+Restart=always        
+
+[Install]
+WantedBy=multi-user.target
