@@ -6,3 +6,9 @@ show_warning = true
 
 # Temperature to show warnings at in "temperature_unit" (default: 90.0)
 warning_temperature = 90.0
+
+# What to show on the display
+# - "Temperature" - Show current CPU temp
+# - "Utilization" - Show CPU utilization
+# - "Automatic" - Switch between both
+display_mode = "Automatic"

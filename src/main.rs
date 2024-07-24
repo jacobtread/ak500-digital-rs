@@ -19,16 +19,19 @@ const REPORT_ID: u8 = 16;
 #[derive(Debug, Deserialize, Default)]
 #[serde(default)]
 struct Configuration {
-    // Unit of to use for showing the temperature
+    /// Unit of to use for showing the temperature
     temperature_unit: TemperatureUnit,
 
     /// Whether to show a high temperature warning
     #[serde(default = "default_show_warning")]
     show_warning: bool,
 
-    // Temperature to show warnings at
+    /// Temperature to show warnings at
     #[serde(default = "default_warning_temperature")]
     warning_temperature: f32,
+
+    /// Display mode
+    display_mode: DisplayMode,
 }
 
 // By default warn when temperature reaches 90deg celsius
@@ -79,6 +82,10 @@ fn main() -> anyhow::Result<()> {
     let warning_temperature: Temperature =
         Temperature(report_unit, configuration.warning_temperature);
 
+    let is_automatic = matches!(configuration.display_mode, DisplayMode::Automatic);
+
+    let mut frame_count = 0;
+
     loop {
         // Get load and temperature
         let load = get_cpu_load(&sys)?;
@@ -94,20 +101,45 @@ fn main() -> anyhow::Result<()> {
         let cpu_temp_local = cpu_temp.convert(report_unit);
         let cpu_temp_value = Into::<u32>::into(cpu_temp_local) as u16;
 
+        // Clamp load value for display
+        let load_value = load.clamp(0., 999.) as u16;
+
         // Determine control unit for the temperature
         let control_unit = ControlUnit::from(report_unit);
 
-        // Write the state to the device
-        write_device_state(
-            &mut device,
-            control_unit,
-            load_progress,
-            cpu_temp_value,
-            warning,
-        )?;
+        // Check if we are displaying temperature
+        let is_temperature = (is_automatic && frame_count < 5)
+            || matches!(configuration.display_mode, DisplayMode::Temperature);
+
+        if is_temperature {
+            // Write the temperature state to the device
+            write_device_state(
+                &mut device,
+                control_unit,
+                load_progress,
+                cpu_temp_value,
+                warning,
+            )?;
+        } else {
+            // Write the utilization state to the device
+            write_device_state(
+                &mut device,
+                ControlUnit::Percentage,
+                load_progress,
+                load_value,
+                warning,
+            )?;
+        }
 
         // Wait
         std::thread::sleep(Duration::from_secs(1));
+
+        frame_count += 1;
+
+        // Reset on 11th frame
+        if frame_count == 10 {
+            frame_count = 0;
+        }
     }
 }
 
@@ -131,6 +163,17 @@ fn get_cpu_load(sys: &System) -> anyhow::Result<f32> {
     let load = (cpu_load.user + cpu_load.nice + cpu_load.system + cpu_load.interrupt) * 100.0;
 
     Ok(load)
+}
+
+#[derive(Debug, Clone, Copy, Deserialize, Default)]
+enum DisplayMode {
+    // Show temperature as the main focus
+    #[default]
+    Temperature,
+    // Show CPU utilization as the main focus
+    Utilization,
+    // Switch between temps and utilization
+    Automatic,
 }
 
 /// Unit of temperature
@@ -167,7 +210,7 @@ impl Temperature {
 
 impl From<Temperature> for u32 {
     fn from(value: Temperature) -> Self {
-        value.1 as u32
+        value.1.round() as u32
     }
 }
 
