@@ -3,9 +3,8 @@ use hidapi::{HidApi, HidDevice};
 use serde::Deserialize;
 use std::fs::read_to_string;
 use std::path::Path;
-use std::thread;
 use std::time::Duration;
-use systemstat::{Platform, System};
+use sysinfo::{Components, CpuRefreshKind, RefreshKind, System};
 
 /// Path to the configuration file
 const CONFIGURATION_PATH: &str = "/etc/ak500-digital/config.toml";
@@ -76,7 +75,12 @@ fn main() -> anyhow::Result<()> {
             Default::default()
         }
     };
-    let sys = System::new();
+
+    let mut sys = System::new_with_specifics(
+        RefreshKind::new().with_cpu(CpuRefreshKind::new().with_cpu_usage()),
+    );
+
+    let mut components = Components::new();
 
     let report_unit = configuration.temperature_unit;
     let warning_temperature: Temperature =
@@ -88,8 +92,8 @@ fn main() -> anyhow::Result<()> {
 
     loop {
         // Get load and temperature
-        let load = get_cpu_load(&sys)?;
-        let cpu_temp = get_cpu_temp(&sys)?;
+        let load = get_cpu_load(&mut sys)?;
+        let cpu_temp = get_cpu_temp(&mut components)?;
 
         // Determine if warning should be shown
         let warning = configuration.show_warning && cpu_temp >= warning_temperature;
@@ -144,25 +148,47 @@ fn main() -> anyhow::Result<()> {
 }
 
 /// Obtains the CPU temperature
-fn get_cpu_temp(sys: &System) -> anyhow::Result<Temperature> {
-    sys.cpu_temp()
-        .map(|value| Temperature(TemperatureUnit::Celsius, value))
-        .context("failed to get cpu temps")
+fn get_cpu_temp(components: &mut Components) -> anyhow::Result<Temperature> {
+    components.refresh_list();
+
+    // Take average of all available packages
+    let mut total_temps = 0;
+    let mut total_temp = 0.0;
+
+    for component in components {
+        let label = component.label();
+        let temp = component.temperature();
+
+        // Intel CPU package
+        if label.starts_with("coretemp Package") {
+            total_temp += temp;
+            total_temps += 1;
+        }
+    }
+
+    let avg = total_temp / (total_temps as f32);
+
+    Ok(Temperature(TemperatureUnit::Celsius, avg))
 }
 
 /// Obtains the CPU load, sleeps for 1s to allow time to aggregate the load
 /// information, this is required.
-fn get_cpu_load(sys: &System) -> anyhow::Result<f32> {
-    let cpu_load = sys.cpu_load_aggregate()?;
+fn get_cpu_load(sys: &mut System) -> anyhow::Result<f32> {
+    sys.refresh_cpu(); // Refreshing CPU information.
 
-    // Wait for cpu load measurements
-    thread::sleep(Duration::from_secs(1));
+    let mut total_cpus = 0;
+    let mut total_usage = 0.0;
 
-    let cpu_load = cpu_load.done().context("failed to check cpu load done")?;
+    for cpu in sys.cpus() {
+        let usage = cpu.cpu_usage();
 
-    let load = (cpu_load.user + cpu_load.nice + cpu_load.system + cpu_load.interrupt) * 100.0;
+        total_usage += usage;
+        total_cpus += 1;
+    }
 
-    Ok(load)
+    let avg = total_usage / (total_cpus as f32);
+
+    Ok(avg)
 }
 
 #[derive(Debug, Clone, Copy, Deserialize, Default)]
