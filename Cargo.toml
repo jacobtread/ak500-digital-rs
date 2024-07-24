@@ -4,6 +4,15 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
+# Error handling
 anyhow = "1"
+
+# HID access
 hidapi = "2.6.1"
+
+# System stats (CPU usage and temps)
 systemstat = "0.2.3"
+
+# Configuration
+serde = { version = "1", features = ["derive"] }
+toml = "0.8.15"

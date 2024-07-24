@@ -1,13 +1,56 @@
 use anyhow::Context;
 use hidapi::{HidApi, HidDevice};
+use serde::Deserialize;
+use std::fs::read_to_string;
+use std::path::Path;
 use std::thread;
 use std::time::Duration;
 use systemstat::{Platform, System};
+
+/// Path to the configuration file
+const CONFIGURATION_PATH: &str = "/etc/ak500-digital/config.toml";
 
 // DeepCool AK500-DIGITAL
 const VENDOR_ID: u16 = 13875;
 const PRODUCT_ID: u16 = 3;
 const REPORT_ID: u8 = 16;
+
+/// Configuration options
+#[derive(Debug, Deserialize, Default)]
+#[serde(default)]
+struct Configuration {
+    // Unit of to use for showing the temperature
+    temperature_unit: TemperatureUnit,
+
+    /// Whether to show a high temperature warning
+    #[serde(default = "default_show_warning")]
+    show_warning: bool,
+
+    // Temperature to show warnings at
+    #[serde(default = "default_warning_temperature")]
+    warning_temperature: f32,
+}
+
+// By default warn when temperature reaches 90deg celsius
+fn default_warning_temperature() -> f32 {
+    90.
+}
+// By default should show warnings
+fn default_show_warning() -> bool {
+    true
+}
+
+// Loads the configuration file
+fn load_configuration() -> anyhow::Result<Configuration> {
+    let path = Path::new(CONFIGURATION_PATH);
+    if !path.exists() {
+        return Ok(Configuration::default());
+    }
+
+    let contents = read_to_string(path).context("failed reading configuration file")?;
+
+    toml::from_str(&contents).context("failed to parse configuration file")
+}
 
 fn main() -> anyhow::Result<()> {
     // Connect to HID device
@@ -19,12 +62,22 @@ fn main() -> anyhow::Result<()> {
     // Write initial loading state
     write_device_state(&mut device, ControlUnit::Loading, 0, 0, false)?;
 
+    let configuration: Configuration = match load_configuration() {
+        Ok(value) => value,
+        Err(err) => {
+            eprintln!(
+                "failed to load configuration, falling back to defaults: {}",
+                err
+            );
+
+            Default::default()
+        }
+    };
     let sys = System::new();
 
-    // Warning flash should start at 90°C
-    const WARNING_TEMPERATURE: Temperature = Temperature(TemperatureUnit::Celsius, 90.0);
-
-    let report_unit = TemperatureUnit::Celsius;
+    let report_unit = configuration.temperature_unit;
+    let warning_temperature: Temperature =
+        Temperature(report_unit, configuration.warning_temperature);
 
     loop {
         // Get load and temperature
@@ -32,7 +85,7 @@ fn main() -> anyhow::Result<()> {
         let cpu_temp = get_cpu_temp(&sys)?;
 
         // Determine if warning should be shown
-        let warning = cpu_temp > WARNING_TEMPERATURE;
+        let warning = configuration.show_warning && cpu_temp >= warning_temperature;
 
         // Convert the load percent to 1-10 for the square usage indicator
         let load_progress = ((load / 100.0) * 10.0).clamp(1.0, 10.0) as u8;
@@ -81,9 +134,10 @@ fn get_cpu_load(sys: &System) -> anyhow::Result<f32> {
 }
 
 /// Unit of temperature
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Deserialize, Default)]
 enum TemperatureUnit {
     /// Temperature in degrees celsius
+    #[default]
     Celsius,
     /// Temperature in degrees fahrenheit
     Fahrenheit,

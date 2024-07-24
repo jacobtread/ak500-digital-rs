@@ -1,0 +1,8 @@
+# Temperature unit to use "Celsius", "Fahrenheit" (default: "Celsius")
+temperature_unit = "Celsius"
+
+# Show warnings when temperature exceeds "warning_temperature" (default: true)
+show_warning = true
+
+# Temperature to show warnings at in "temperature_unit" (default: 90.0)
+warning_temperature = 90.0

@@ -3,6 +3,17 @@
 WIP Open Source system monitor for the DEEPCOOL AK500 DIGITAL CPU display with the main purpose to 
 be driving the display under linux (But also boasts not having to run electron and JS just for a CPU monitor)
 
+## Configuration
+
+
+```sh
+# Create the config directory
+sudo mkdir /etc/ak500-digital
+
+# Copy the example config
+sudo cp ./example-config.toml /etc/ak500-digital/config.toml
+```
+
 
 ## Linux Notes
 
