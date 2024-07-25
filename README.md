@@ -1,12 +1,58 @@
 
-<img src="./assets/cooler.jpg" width="240px"/>
+<img src="./assets/cooler.jpg" width="240px" alt="DEEPCOOL AK500 powered by this software"/>
 
-# AK500 DIGITAL RS
+# AK500 DIGITAL Service
 
-WIP Open Source system monitor for the DEEPCOOL AK500 DIGITAL CPU display with the main purpose to 
-be driving the display under linux (But also boasts not having to run electron and JS just for a CPU monitor)
+Open-source system monitor background service designed for the DEEPCOOL AK500 DIGITAL CPU display. Its primary goal is to drive the display under Linux, avoiding the need for a clunky Electron app that has no linux releases just to power the monitoring.
 
-Only supports linux at the moment, library for CPU temps doesn't support windows yet.
+This is intended as a replacement to the [DeepCool DIGITAL Control Software](https://www.deepcool.com/downloadpage/)
+
+Currently, it only supports Linux as the library for CPU temperature monitoring does not yet support Windows.
+
+## Configuration
+
+The configuration file is loaded from `/etc/ak500-digital/config.toml` you can find an example [Here](./example-config.toml)
+
+The commands below will set the current config to the example config
+
+
+```sh
+# Create the config directory (Only required for first time)
+sudo mkdir /etc/ak500-digital
+
+# Copy the example config
+sudo cp ./example-config.toml /etc/ak500-digital/config.toml
+```
+
+Development is done on **Fedora** you will need to adapt these commands to your specific distribution
+
+## Native Dependencies
+
+libudev - Used for USB device access, required to build the executable
+
+```sh
+sudo dnf install libudev-devel 
+```
+
+## Unprivileged USB access
+
+By default linux will not allow access to HID devices without sudo.
+
+You can allow unprivileged access to the UPS HID device by doing the following
+
+Create a rules file at `/etc/udev/rules.d/50-ak500-digitial.rules` in this file put the following line:
+
+```
+KERNEL=="hidraw*", ATTRS{idVendor}=="3633", ATTRS{idProduct}=="0003", TAG+="uaccess"
+```
+
+Then, replug your device or run:
+
+```sh
+sudo udevadm control --reload-rules && sudo udevadm trigger
+```
+
+This will allow the program to access the device without requiring sudo
 
 ## Installation
 
@@ -41,46 +87,4 @@ sudo systemctl enable ak500-digital
 sudo systemctl status ak500-digital
 ```
 
-## Configuration
 
-
-```sh
-# Create the config directory
-sudo mkdir /etc/ak500-digital
-
-# Copy the example config
-sudo cp ./example-config.toml /etc/ak500-digital/config.toml
-```
-
-
-## Linux Notes
-
-I have only tested development on Fedora, you will need to adjust these to be relevant for your distro
-
-## Dependencies
-
-libudev - Used for USB device access
-
-```sh
-sudo dnf install libudev-devel 
-```
-
-## Unprivileged USB access
-
-By default linux will not allow access to HID devices without sudo which makes it hard to debug and develop this program.
-
-You can allow unprivileged access to the UPS HID device by doing the following
-
-Create a rules file at `/etc/udev/rules.d/50-ak500-digitial.rules` in this file put the following line:
-
-```
-KERNEL=="hidraw*", ATTRS{idVendor}=="3633", ATTRS{idProduct}=="0003", TAG+="uaccess"
-```
-
-Then, replug your device or run:
-
-```sh
-sudo udevadm control --reload-rules && sudo udevadm trigger
-```
-
-You should now be able to run the program without privileges
