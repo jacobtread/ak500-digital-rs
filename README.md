@@ -38,7 +38,7 @@ sudo dnf install libudev-devel
 
 By default linux will not allow access to HID devices without sudo.
 
-You can allow unprivileged access to the UPS HID device by doing the following
+You can allow unprivileged access to the HID device by doing the following
 
 Create a rules file at `/etc/udev/rules.d/50-ak500-digitial.rules` in this file put the following line:
 
