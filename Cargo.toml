@@ -11,7 +11,7 @@ anyhow = "1"
 hidapi = "2.6.1"
 
 # System stats (CPU usage and temps)
-sysinfo = "0.30.13"
+sysinfo = "0.31"
 
 # Configuration
 serde = { version = "1", features = ["derive"] }

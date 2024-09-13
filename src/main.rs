@@ -175,7 +175,7 @@ fn get_cpu_temp(components: &mut Components) -> anyhow::Result<Temperature> {
 /// Obtains the CPU load, sleeps for 1s to allow time to aggregate the load
 /// information, this is required.
 fn get_cpu_load(sys: &mut System) -> anyhow::Result<f32> {
-    sys.refresh_cpu(); // Refreshing CPU information.
+    sys.refresh_cpu_usage(); // Refreshing CPU information.
 
     let mut total_cpus = 0;
     let mut total_usage = 0.0;
