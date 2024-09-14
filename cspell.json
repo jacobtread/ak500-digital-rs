@@ -2,8 +2,16 @@
     "words": [
         "coretemp",
         "cpus",
+        "DEEPCOOL",
+        "devel",
         "hidapi",
+        "hidraw",
+        "Jacobtread",
+        "libudev",
         "repr",
-        "sysinfo"
+        "sysinfo",
+        "uaccess",
+        "udev",
+        "udevadm"
     ]
 }

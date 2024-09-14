@@ -1,5 +1,5 @@
 [Unit]
-Description=AK500 Digitial service
+Description=AK500 Digital service
 After=udev.service
 
 [Service]

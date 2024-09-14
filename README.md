@@ -40,13 +40,13 @@ By default linux will not allow access to HID devices without sudo.
 
 You can allow unprivileged access to the HID device by doing the following
 
-Create a rules file at `/etc/udev/rules.d/50-ak500-digitial.rules` in this file put the following line:
+Create a rules file at `/etc/udev/rules.d/50-ak500-digital.rules` in this file put the following line:
 
 ```
 KERNEL=="hidraw*", ATTRS{idVendor}=="3633", ATTRS{idProduct}=="0003", TAG+="uaccess"
 ```
 
-Then, replug your device or run:
+Then, un-plug and re-plug your device or run:
 
 ```sh
 sudo udevadm control --reload-rules && sudo udevadm trigger
