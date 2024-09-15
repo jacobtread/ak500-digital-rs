@@ -294,7 +294,7 @@ fn write_device_state(
     let control_unit_byte = control_unit as u8;
     let warning_byte = warning as u8;
 
-    let [hundreds, tens, units] = convert_to_digits(value);
+    let DisplayDigits(hundreds, tens, units) = value.into();
 
     let message = [
         REPORT_ID,
@@ -312,15 +312,20 @@ fn write_device_state(
     Ok(())
 }
 
-/// Converts the provided number 0-999 into the 3 digits that
-/// can be shown on the digital display
-fn convert_to_digits(value: u16) -> [u8; 3] {
-    // Display can only show numbers up to 999
-    let value = value.clamp(0, 999);
+/// Digits for the display to show
+struct DisplayDigits(u8, u8, u8);
 
-    let hundreds = value / 100;
-    let tens = (value % 100) / 10;
-    let units = value % 10;
+impl From<u16> for DisplayDigits {
+    /// Converts the provided number 0-999 into the 3 digits that
+    /// can be shown on the digital display
+    fn from(value: u16) -> Self {
+        // Display can only show numbers up to 999
+        let value = value.clamp(0, 999);
 
-    [hundreds as u8, tens as u8, units as u8]
+        let hundreds = value / 100;
+        let tens = (value % 100) / 10;
+        let units = value % 10;
+
+        Self(hundreds as u8, tens as u8, units as u8)
+    }
 }
