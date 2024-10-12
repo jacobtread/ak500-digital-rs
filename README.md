@@ -3,6 +3,9 @@
 
 # AK500 DIGITAL Service
 
+![License](https://img.shields.io/github/license/jacobtread/ak500-digital-rs?style=for-the-badge)
+
+
 Open-source system monitor background service designed for the DEEPCOOL AK500 DIGITAL CPU display. Its primary goal is to drive the display under Linux, avoiding the need for a clunky Electron app that has no linux releases just to power the monitoring.
 
 This is intended as a replacement to the [DeepCool DIGITAL Control Software](https://www.deepcool.com/downloadpage/)
@@ -86,5 +89,4 @@ sudo systemctl enable ak500-digital
 # Verify the service has started
 sudo systemctl status ak500-digital
 ```
-
 
